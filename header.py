@@ -1,29 +1,25 @@
 #Standard Imports
 import cv2
 import numpy as np
+import math
 import threading
 import time
 from scipy.spatial import distance as dist
 from imutils import perspective
 
-def x_distance(z, pxl):
-    xh = 1.15 #width in x direction in meters
-    if pxl < 960:
-        return float(-xh/1920*z*pxl)
-    else:
-        return float(xh/1920*z*pxl)
+def z_distance(wp):
+    z = 143.72*pow(wp, -.976)
+    return float(z)
 
-def z_distance(pxl):
-    ratio = .68/1080 # meters/pixel
-    h = .0635 #cm = 4 inches
-    return float((h/ratio)/pxl)
-
-def y_distance(z, pxl):
-    yh = .7 #length in y direction in meters
-    if pxl < 540:
-        return float(yh/1080*z*pxl)
-    else:
-        return float(-yh/1080*z*pxl)
+def theta_offset(z, cx, center, ppm):
+    x = (cx - center)/ppm
+    theta = math.atan(x/z)
+    return theta
+    
+def phi_offset(z, cy, center, ppm):
+    y = (cy - center)/ppm
+    phi = math.atan(y/z)
+    return phi
 
 def midpoint(left, right):
     x = int((left[0]+right[0])/2)
@@ -32,34 +28,44 @@ def midpoint(left, right):
 
 def hex_position(frame, cnt, approx):
     
+    centerFrame = (640,512)
+    
     #finds rectangle vertices around area, then orders them clockwise
     #   starting at top left
     box = np.array(cv2.boxPoints(cv2.minAreaRect(cnt)))
-    (topLeft, topRight, bottomLeft, bottomRight) = perspective.order_points(box)
+    (topLeft, topRight, bottomRight, bottomLeft) = perspective.order_points(box)
     
     #finds horizontal midpoints along top and bottom and draws
-    topMiddle = midpoint(topLeft,topRight)
-    bottomMiddle = midpoint(bottomLeft, bottomRight)
+    leftMiddle = midpoint(topLeft,bottomLeft)
+    rightMiddle = midpoint(topRight, bottomRight)
     
-    #finds z using pixel ratio from h
-    h = dist.euclidean(topMiddle, bottomMiddle)
-    z = z_distance(h)
+    #finds width in pixels of hexagon
+    wp = dist.euclidean(leftMiddle, rightMiddle)
     
-    #finds x and y offset using trig ratios
-    center = midpoint(topMiddle, bottomMiddle)
-    y = y_distance(z, (540-center[1]))
-    x = x_distance(z, (960-center[0]))
+    #pixels per meter
+    ppm = wp/.1143 #width in cm = 11.43
+    
+    #finds center
+    cx, cy = midpoint(leftMiddle, rightMiddle)
+    center = (cx, cy)
+    
+    #finds z
+    z = z_distance(wp)
+    
+    #finds theta and phi angle offset using trig ratios
+    theta = theta_offset(z, cx, centerFrame[0], ppm)
+    phi = phi_offset(z, cy, centerFrame[1], ppm)
     
     #Checks if LED is on behind the hexagon
     #ledLit = ledSearch(frame, topLeft, topRight, bottomLeft, bottomRight, center)
     
     cv2.drawContours(frame, [approx], 0, (0, 0, 255), 3)
-    cv2.line(frame, topMiddle, bottomMiddle, (255, 0, 0), 2)
-    cv2.line(frame, center, (960,540), (0, 255, 0), 2)
+    cv2.line(frame, leftMiddle, rightMiddle, (255, 0, 0), 2)
+    cv2.line(frame, center, centerFrame, (0, 255, 0), 2)
     
-    offsetMeters = [round(x,3),round(y,3),round(z,3)]
+    offsetAngles = [round(z,3),round(theta,3),round(phi,3)]
     
-    return offsetMeters, center#, ledLit
+    return offsetAngles, center#, ledLit
 
 def printpos(offsetMeters):
     if offsetMeters[0] == 0 and offsetMeters[1] == 0 and offsetMeters[2] == 0:
