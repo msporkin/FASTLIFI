@@ -42,9 +42,9 @@ def midpoint(left, right):
 
 def hex_find():
     #read frame
-    ret, frame1 = cap.read()
+    ret, frame = cap.read()
     
-    hsv = cv2.cvtColor(frame1, cv2.COLOR_BGR2HSV)   #converts BRG -> HSV image
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)   #converts BRG -> HSV image
     mask = cv2.inRange(hsv, lb, ub)   #masks all colors other than ideal green
     
     # Converting image to a binary image 
@@ -60,9 +60,14 @@ def hex_find():
             approx = cv2.approxPolyDP(cnt, 0.03 * cv2.arcLength(cnt, True), True) 
             # Checking if the no. of sides of the selected region is 7. 
             if (len(approx) == 6):
-                offsetAngles, center = hex_position(frame1, cnt, approx)        
-                cv2.putText(frame1, str(offsetAngles),(100,500),font,1,(0,0,0),2)
-    return frame1, cnt, approx
+                targetFound = True
+                offsetAngles, center = hex_position(frame, cnt, approx)
+        
+                cv2.putText(frame, str(offsetAngles),(100,500),font,1,(0,0,0),2)
+                
+    # Showing the image along with outlined arrow.
+    cv2.imshow('Room Scan', cv2.resize(frame, (960,540)))
+    return frame, cnt, approx
 
 def hex_position(frame, cnt, approx):
     

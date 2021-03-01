@@ -63,8 +63,8 @@ while ledLit == False:
             approx = cv2.approxPolyDP(cnt, 0.03 * cv2.arcLength(cnt, True), True) 
             # Checking if the no. of sides of the selected region is 7. 
             if (len(approx) == 6):
-                targetFound = True
                 offsetAngles, center = hex_position(frame, cnt, approx)
+                targetFound = True
                 #tiltInfo = tilt(approx)
         
                 cv2.putText(frame, str(offsetAngles),(100,500),font,1,(0,0,0),2)

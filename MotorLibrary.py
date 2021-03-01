@@ -190,8 +190,8 @@ def oneTickUp(ap2, an2, bp2, bn2):
           GPIO.output(bn2, 1)
           time.sleep(delayC)
     elif winding_i2 == 1:      
-          GPIO.output(bp2, 0)
-          GPIO.output(bn2, 1)
+          GPIO.output(ap2, 0)
+          GPIO.output(an2, 1)
           GPIO.output(bp2, 1)
           GPIO.output(bn2, 0)
           time.sleep(delayC)
@@ -212,8 +212,6 @@ def oneTickUp(ap2, an2, bp2, bn2):
 #Defining one cycle in clockwise direction(1.8 degree step) for second L298N
 def oneTickDown(ap2, an2, bp2, bn2):
     global winding_i2
-    if winding_i2 > 3:
-        winding_i2 = 0 
     if winding_i2 == 0:
           GPIO.output(ap2, 1)
           GPIO.output(an2, 0)
@@ -221,8 +219,8 @@ def oneTickDown(ap2, an2, bp2, bn2):
           GPIO.output(bn2, 0)
           time.sleep(delayC)
     elif winding_i2 == 1:      
-          GPIO.output(bp2, 0)
-          GPIO.output(bn2, 1)
+          GPIO.output(ap2, 0)
+          GPIO.output(an2, 1)
           GPIO.output(bp2, 1)
           GPIO.output(bn2, 0)
           time.sleep(delayC)
@@ -239,6 +237,8 @@ def oneTickDown(ap2, an2, bp2, bn2):
           GPIO.output(bn2, 1)
           time.sleep(delayC)
     winding_i2 = winding_i2 + 1
+    if winding_i2 > 3:
+        winding_i2 = 0 
     
 #2/18 - 180 degrees in 7000 clicks (clock-limited movements)
 #2/19 - 180 degrees in 500 clicks (continuous)
